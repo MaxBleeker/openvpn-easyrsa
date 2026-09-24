@@ -55,3 +55,34 @@ sed -i -e "s/^ca /;ca /" -e "s/^cert /;cert /" -e "s/^key /;key /" laptop.ovpn
 ```
 
 `^server ` does not match `;server-bridge`. `^remote my-server-1 ` does not match the commented second remote. `^ca `, `^cert `, and `^key ` do not match `remote-cert-tls`.
+
+## WireGuard
+
+WireGuard does not use the easy-rsa PKI. `wg.sh` makes its own keys.
+
+```bash
+sudo apt install wireguard
+bash wg.sh 51820 203.0.113.10 10.9.0.1/24 10.9.0.0/24 laptop 10.9.0.2/32 phone 10.9.0.3/32
+```
+
+Arguments are the listen port, the address clients connect to, the server tunnel address, the network clients should route through the tunnel, then one or two `NAME ADDRESS` pairs. Give each client a `/32`. This writes `wg/wg0.conf` and `wg/NAME.conf`.
+
+```bash
+sudo cp wg/wg0.conf /etc/wireguard/wg0.conf
+sudo wg-quick up wg0
+```
+
+## Both on one machine
+
+Run the OpenVPN scripts and `wg.sh` from the same directory. They write different files. Use a different UDP port and a different tunnel network so the two do not claim the same traffic.
+
+```bash
+bash pki.sh laptop phone
+bash server.sh 1194 10.0.0.5 10.8.0.0 255.255.255.0
+bash client.sh laptop 203.0.113.10 1194
+bash client.sh phone 203.0.113.10 1194
+
+bash wg.sh 51820 203.0.113.10 10.9.0.1/24 10.9.0.0/24 laptop 10.9.0.2/32 phone 10.9.0.3/32
+```
+
+`203.0.113.10` is the same public address in both. OpenVPN uses port `1194` and `10.8.0.0/24`. WireGuard uses port `51820` and `10.9.0.0/24`. Give a client `laptop.ovpn` or `wg/laptop.conf`, or both if that machine should be able to bring up either tunnel.

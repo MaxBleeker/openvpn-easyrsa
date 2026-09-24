@@ -1,4 +1,5 @@
 pki/
+wg/
 *.ovpn
 server.conf
 ca.crt
