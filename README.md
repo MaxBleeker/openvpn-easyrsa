@@ -1,57 +1,14 @@
 # openvpn-easyrsa
 
-Build an OpenVPN server and any number of clients with easy-rsa.
-
-The script initializes a PKI, builds the CA, server certificate, and one certificate per client name, generates `dh.pem`, and writes configs from the OpenVPN sample files (`server.conf` and `client.conf`). On Debian and Ubuntu those files are usually under `/usr/share/doc/openvpn/examples/sample-config-files/`, sometimes gzipped. Other packages use `/usr/share/doc/openvpn/sample-config-files/` or `/usr/share/doc/openvpn/sample/sample-config-files/`.
-
-Each client file comments out the sample `ca`, `cert`, `key`, and `tls-auth` lines and appends that material inline:
-
-```
-<ca>
-... ca.crt ...
-</ca>
-<cert>
-... client certificate ...
-</cert>
-<key>
-... client key ...
-</key>
-<tls-auth>
-... ta.key ...
-</tls-auth>
-key-direction 1
-```
-
-## Requirements
-
-- bash
-- easy-rsa
-- openvpn
-- openssl
-- the OpenVPN sample config files
-
 ```bash
-sudo apt install openvpn easy-rsa
+bash openvpn-easyrsa.sh vpn.example.com laptop phone
 ```
 
-## Usage
-
-```bash
-bash openvpn-easyrsa.sh \
-  --remote vpn.example.com \
-  --server 10.8.0.0 255.255.255.0 \
-  --route 192.168.1.0 255.255.255.0 \
-  --route 10.10.0.0 255.255.0.0 \
-  laptop phone
-```
-
-`--server SUBNET MASK` sets the tunnel network (`server SUBNET MASK` in `server.conf`). Omit it to keep the sample file's server line.
-
-`--route SUBNET MASK` appends `push "route SUBNET MASK"` so clients send that network through the tunnel. Repeat the flag for another network. The subnet and mask are written exactly as given.
+That builds an easy-rsa PKI and writes `./openvpn-out` from the OpenVPN sample `server.conf` and `client.conf` (including gzipped copies under `/usr/share/doc/openvpn`):
 
 ```
 openvpn-out/
-  pki/                         easy-rsa PKI, including the CA private key
+  pki/
   server/
     server.conf
     ca.crt
@@ -64,8 +21,12 @@ openvpn-out/
     phone.ovpn
 ```
 
-Copy `server/` to the OpenVPN server, for example `/etc/openvpn/server/`. Copy each `.ovpn` to that client. The `.ovpn` files contain private keys.
+Each `.ovpn` comments out `ca`, `cert`, `key`, and `tls-auth`, then appends `<ca>`, `<cert>`, `<key>`, and `<tls-auth>`. The first argument is the address written on the client `remote` line. The sample server network, port, and protocol are left as they are.
 
-`--force` replaces an output directory this script created. It will not delete any other directory.
+Running it again deletes `./openvpn-out` first. The `.ovpn` files and `pki/private/ca.key` are private keys.
 
-Pass `--sample-dir` if the sample configs are not in a standard location.
+Needs `easy-rsa`, `openvpn`, and `openssl`:
+
+```bash
+sudo apt install openvpn easy-rsa
+```
