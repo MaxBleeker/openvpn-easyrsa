@@ -1,1 +1,7 @@
-openvpn-out/
+pki/
+*.ovpn
+server.conf
+ca.crt
+server.crt
+server.key
+dh.pem
